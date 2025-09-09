@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Video Captioning Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .error-notification {
+            transition: all 0.3s ease-in-out;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        .error-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .error-notification.hide {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f5f7ff] min-h-screen flex flex-col items-center py-8">
+    <div class="w-full max-w-2xl mx-auto">
+        <h1 class="text-4xl font-bold text-center mb-2">Video Captioning Studio</h1>
+        <p class="text-center text-gray-500 mb-6">Upload your video and generate professional subtitles automatically
+        </p>
+
+        <!-- Upload Video -->
+        <div class="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 class="font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"></path>
+                </svg>
+                Upload Video
+            </h2>
+            <label
+                class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 cursor-pointer hover:border-blue-400 transition mb-2">
+                <input type="file" class="hidden" id="videoInput">
+                <span class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"></path>
+                    </svg>
+                    <span class="text-gray-500">Click to upload or drag and drop</span>
+                    <span class="text-xs text-gray-400 mt-1">MP4, AVI, MOV, MKV files supported</span>
+                </span>
+            </label>
+        </div>
+
+        <!-- Subtitle Settings -->
+        <div class="bg-white rounded-xl shadow p-6 mb-6 border border-gray-200">
+            <h2 class="font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Subtitle Settings
+            </h2>
+            <form id="captionForm" class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="fontInput">Font</label>
+                    <select id="fontInput" name="font" class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                        <option value="Arial">Arial</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="fontSizeInput">Font Size</label>
+                    <input type="number" name="font_size" min="5" max="50" id="fontSizeInput"
+                        class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="fontColorInput">Font Color</label>
+                    <input type="color" name="font_color" id="fontColorInput" class="w-full h-10 rounded border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="strokeColorInput">Stroke Color</label>
+                    <input type="color" name="stroke_color" id="strokeColorInput" class="w-full h-10 rounded border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="strokeWidthInput">Stroke Width</label>
+                    <input type="number" name="stroke_width" min="0" max="20" id="strokeWidthInput"
+                        class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="positionInput">Position</label>
+                    <select id="positionInput" name="position_id" class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                        <option value="1">Bottom</option>
+                        <option value="2">Center</option>
+                        <option value="3">Top</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="maxCharsInput">Max Chars</label>
+                    <input type="number" name="max_chars" min="1" max="100" id="maxCharsInput"
+                        class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="maxDurationInput">Max Duration (s)</label>
+                    <input type="number" name="max_duration" min="0.1" max="20" step="0.1" id="maxDurationInput"
+                        class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" for="maxGapInput">Max Gap (s)</label>
+                    <input type="number" name="max_gap" min="0" max="5" step="0.1" id="maxGapInput"
+                        class="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="col-span-2 flex items-center gap-2 mt-2">
+                    <input type="checkbox" name="shadow" id="shadowEnabledInput" class="rounded border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <label for="shadowEnabledInput" class="text-sm font-medium">Shadow Enabled</label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-white rounded-xl shadow p-6 mb-6">
+            <label for="videoStatus" class="block text-sm font-medium mb-2">Caption Progress:</label>
+            <progress id="videoStatus" value="0" min="0" max="100" class="w-full h-4"></progress>
+        </div>
+
+        <!-- Upload Button -->
+        <button id="uploadButton"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-lg flex items-center justify-center gap-2 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"></path>
+            </svg>
+            Generate Subtitles
+        </button>
+    </div>
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/main.js"></script>
+</body>
+
+</html>
