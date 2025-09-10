@@ -60,13 +60,27 @@ Frontend/
 Open `Frontend/html/main.html` in your browser. Make sure the backend server is running.
 
 ## API Endpoints
-- `GET /health` — Health check
-- `POST /videos/upload` — Upload a video
-- `GET /videos/{id}/captions` — Get captions for a video
+- `GET /`  
+  Root endpoint. Returns a welcome message.
+
+- `GET /health`  
+  Health check endpoint. Returns API status and timestamp.
+
+- `POST /api/v1/jobs/upload`  
+  Upload a video for captioning.  
+  **Form fields:**  
+    - `video`: Video file (MP4, AVI, MOV, MKV, max 250MB)  
+    - Subtitle options: `font_family`, `font_size`, `font_color`, `stroke_color`, `stroke_width`, `position`, `shadow`, `max_chars`, `max_duration`, `max_gap`
+
+- `GET /api/v1/jobs/{job_id}/status`  
+  Get the status and progress of a video processing job.
+
+- `GET /api/v1/jobs/{job_id}/download`  
+  Download the processed (captioned) video for a completed job.
 
 ## Data Storage
-- Videos and subtitles are stored in `Backend/app/data/`
-- Temporary files in `Backend/app/temp/`
+- Uploaded videos and temporary processing files are stored in `Backend/app/temp/`
+- The SQLite database (`jobs.db`) is stored in `Backend/app/data/`
 
 ## Requirements
 - Python 3.11+
