@@ -14,6 +14,7 @@ class JobCreation(BaseModel):
         input_path (str): Path to the input video file.
         output_path (str): Path to the output (captioned) video file.
         original_filename (str): Original filename uploaded by the user.
+        file_hash (str): SHA-256 hash of the uploaded video file for duplicate detection.
     """
     job_id: str
     status_id: int
@@ -22,6 +23,7 @@ class JobCreation(BaseModel):
     input_path: str
     output_path: str
     original_filename: str
+    file_hash: str = ""
 
 class JobInformation(BaseModel):
     """

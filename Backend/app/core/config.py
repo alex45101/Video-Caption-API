@@ -1,3 +1,4 @@
+import asyncio
 import os
 from pathlib import Path
 from fastapi import FastAPI
@@ -11,8 +12,9 @@ async def lifespan(app: FastAPI):
     Handles FastAPI application lifespan events.
 
     This function is called at startup and shutdown of the FastAPI app.
-    On startup, it initializes the database and cleans up temporary files.
-    On shutdown, it can be extended to handle any cleanup logic if needed.
+    On startup, it initializes the database, cleans up temporary files,
+    and starts the JobWatchdog background task.
+    On shutdown, the JobWatchdog task is cancelled gracefully.
 
     Args:
         app (FastAPI): The FastAPI application instance.
@@ -22,6 +24,10 @@ async def lifespan(app: FastAPI):
     """
     # Startup: initialize database and clean temp files
     from app.services.database import init_database
+    from app.services.job_monitor import start_job_watchdog
+    from app.services.job_retry import start_retry_agent
+    from app.services.disk_guardian import start_disk_guardian
+
     init_database()
     cleanup_temp_files()
 
@@ -32,9 +38,21 @@ async def lifespan(app: FastAPI):
             print("ImageMagik path configured for local dev")
         except Exception as e:
             print(f"Could not configure ImageMagick: {e}")
+
+    # Start background tasks
+    watchdog_task = asyncio.create_task(start_job_watchdog())      # detects stuck jobs
+    retry_task = asyncio.create_task(start_retry_agent())          # retries transient failures
+    disk_task = asyncio.create_task(start_disk_guardian())         # frees disk when space is low
+
     yield
+
     # Shutdown
-    pass
+    for task in (watchdog_task, retry_task, disk_task):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 
 def create_app() -> FastAPI:

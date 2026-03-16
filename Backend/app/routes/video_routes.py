@@ -1,10 +1,12 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from pathlib import Path
+import hashlib
 import os
 
 from app.models import SubtitleOptions, JobStatus, UploadResponse
 from app.services import create_job, pull_job_status, pull_job_download_url, background_video_processing
+from app.services.database import get_job_by_hash_db
 from app.services.video_service import TEMP_DIR
 
 router = APIRouter()
@@ -67,14 +69,24 @@ async def upload_video(
         max_gap=max_gap
     )
 
+    content = await video.read()
+
+    file_hash = hashlib.sha256(content).hexdigest()
+    existing_job_id = get_job_by_hash_db(file_hash)
+    if existing_job_id:
+        return UploadResponse(
+            job_id=existing_job_id,
+            msg="Duplicate file detected. Returning existing job.",
+            status_url=f"/jobs/{existing_job_id}/status"
+        )
+
     # Create a new job in the database
-    job_data = create_job(video.filename, subtitle_options)
+    job_data = create_job(video.filename, subtitle_options, file_hash)
     job_id = job_data["Job_Id"]
     input_path = job_data["Input_Path"]
-    output_path = job_data["Output_Path"]    
+    output_path = job_data["Output_Path"]
 
     # Save the uploaded video file to disk
-    content = await video.read()
     with open(input_path, "wb") as f:
         f.write(content)
 

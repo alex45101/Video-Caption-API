@@ -17,7 +17,7 @@ from faster_whisper import WhisperModel
 from moviepy.editor import TextClip, CompositeVideoClip, VideoFileClip
 
 from app.models import JobCreation, JobInformation, JobStatus, SubtitleOptions
-from app.services.database import create_job_db, get_job_status_db, get_job_download_URL_db, update_job_status_db, update_job_completed_db, update_job_failed_db
+from app.services.database import create_job_db, get_job_status_db, get_job_download_URL_db, update_job_status_db, update_job_completed_db, update_job_failed_db, get_job_by_hash_db
 
 from app.core.settings import TEMP_DIR, SUBTITLE_DIR
 
@@ -555,30 +555,31 @@ async def background_video_processing(
         success = await process_video_with_subtitles(job_id, input_path, output_path, subtitle_options)
 
         if success:
-            update_job_completed_db(job_id)            
+            update_job_completed_db(job_id)
+            # Only remove the input file on success; RetryAgent needs it on failure
+            if os.path.exists(input_path):
+                os.remove(input_path)
         else:
             update_job_failed_db(job_id, "Error: Unable to process video")
 
     except Exception as e:
         update_job_failed_db(job_id, f"Error: {str(e)}")
-    finally:
-        if os.path.exists(input_path):
-            os.remove(input_path)
 
 
-def create_job(video_filename: str, subtitle_options: SubtitleOptions) -> Dict[str, Any]:
+def create_job(video_filename: str, subtitle_options: SubtitleOptions, file_hash: str = "") -> Dict[str, Any]:
     """
     Create a new job entry in the database.
 
     Args:
         video_filename (str): Name of the uploaded video file.
         subtitle_options (SubtitleOptions): Subtitle styling options.
+        file_hash (str): SHA-256 hash of the uploaded file for FileGuard duplicate detection.
 
     Returns:
         Dict[str, Any]: Job metadata including job ID and file paths.
     """
     job_id = str(uuid.uuid4())
-    
+
     input_filename = f"{job_id}_input{Path(video_filename).suffix}"
     output_filename = f"{job_id}_output.mp4"
 
@@ -592,13 +593,14 @@ def create_job(video_filename: str, subtitle_options: SubtitleOptions) -> Dict[s
         created_at=datetime.now(),
         input_path=input_path,
         output_path=output_path,
-        original_filename=video_filename
+        original_filename=video_filename,
+        file_hash=file_hash
     )
-    
+
     create_job_db(job_data, subtitle_options)
-    return { 
-            "Job_Id": job_data.job_id, 
-            "Input_Path": input_path, 
+    return {
+            "Job_Id": job_data.job_id,
+            "Input_Path": input_path,
             "Output_Path": output_path
     }
 
