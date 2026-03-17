@@ -509,30 +509,6 @@ class VideoCaption:
         final_video_clip.write_videofile(self.output_file_path)        
 
     
-async def process_video_with_subtitles(
-    job_id: str,
-    input_path: str, 
-    output_path: str, 
-    subtitle_options: SubtitleOptions
-) -> bool:
-    """
-    Orchestrates the video processing pipeline for a job.
-
-    Args:
-        job_id (str): Unique job identifier.
-        input_path (str): Path to input video.
-        output_path (str): Path to output video.
-        subtitle_options (SubtitleOptions): Subtitle styling options.
-
-    Returns:
-        bool: True if processing succeeded, False otherwise.
-    """
-    videoCaption = VideoCaption(job_id, input_path, output_path, subtitle_options)
-    await videoCaption.generate_subtitles()
-
-    return True
-
-
 async def background_video_processing(
     job_id: str,
     input_path: str,
@@ -543,6 +519,11 @@ async def background_video_processing(
     Background task for processing video with subtitles.
     Updates job status in the database.
 
+    generate_subtitles() raises on failure, so exceptions are caught below and
+    recorded as a failed job. The old process_video_with_subtitles wrapper always
+    returned True, making the success/failure branch unreachable — it has been
+    removed and generate_subtitles() is called directly here.
+
     Args:
         job_id (str): Unique job identifier.
         input_path (str): Path to input video.
@@ -552,15 +533,13 @@ async def background_video_processing(
     try:
         update_job_status_db(job_id, status_id=Status.NotStarted.value, progress=10)
 
-        success = await process_video_with_subtitles(job_id, input_path, output_path, subtitle_options)
+        video_caption = VideoCaption(job_id, input_path, output_path, subtitle_options)
+        await video_caption.generate_subtitles()
 
-        if success:
-            update_job_completed_db(job_id)
-            # Only remove the input file on success; RetryAgent needs it on failure
-            if os.path.exists(input_path):
-                os.remove(input_path)
-        else:
-            update_job_failed_db(job_id, "Error: Unable to process video")
+        update_job_completed_db(job_id)
+        # Only remove the input file on success; RetryAgent needs it on failure
+        if os.path.exists(input_path):
+            os.remove(input_path)
 
     except Exception as e:
         update_job_failed_db(job_id, f"Error: {str(e)}")

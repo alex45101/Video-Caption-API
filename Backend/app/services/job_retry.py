@@ -75,5 +75,5 @@ async def _retry_failed_jobs(max_retries: int):
             print(f"RetryAgent: Failed to reset job {job_id} for retry")
             continue
 
-        print(f"RetryAgent: Re-queuing job {job_id} (attempt {job.get('retry_count', '?') + 1})")
+        print(f"RetryAgent: Re-queuing job {job_id}")
         asyncio.create_task(background_video_processing(job_id, input_path, output_path, subtitle_options))

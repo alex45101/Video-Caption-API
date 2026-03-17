@@ -4,6 +4,11 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+_allowed_origins = os.environ.get(
+    "ALLOWED_ORIGINS",
+    "http://localhost,http://127.0.0.1"
+).split(",")
+
 from app.services import cleanup_temp_files
 
 
@@ -75,7 +80,7 @@ def create_app() -> FastAPI:
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # In production, specify exact origins
+        allow_origins=_allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"]

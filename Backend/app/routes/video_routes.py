@@ -50,9 +50,11 @@ async def upload_video(
     # Validate file type
     if not video.content_type.startswith("video/"):
         raise HTTPException(status_code=400, detail="File must be a video")
-    
-    # Validate file size
-    if (video.size / pow(1024, 2)) >= 250:
+
+    content = await video.read()
+
+    # Validate file size against the actual byte count, not the Content-Length header
+    if len(content) / pow(1024, 2) >= 250:
         raise HTTPException(status_code=400, detail="File must be 250 MB or less")
 
     # Build subtitle options from form data
@@ -68,8 +70,6 @@ async def upload_video(
         max_duration=max_duration,
         max_gap=max_gap
     )
-
-    content = await video.read()
 
     file_hash = hashlib.sha256(content).hexdigest()
     existing_job_id = get_job_by_hash_db(file_hash)
